@@ -32,10 +32,16 @@ class Tracker:
         A Kalman filter to filter target trajectories in image space.
     tracks : List[Track]
         The list of active tracks at the current time step.
+
+
+    Todo for Unattended Bags MVP
+    - Increase max-age to very high number e.g. 500 (original: 500)
+    - Decrease max iou distance to small number such that we only want stationary objects e.g. 0.1 (original: 0.9)
+    - Decrease feature similarity requirement? (later)
     """
     GATING_THRESHOLD = np.sqrt(kalman_filter.chi2inv95[4])
 
-    def __init__(self, metric, max_iou_distance=0.9, max_age=30, n_init=3, _lambda=0, ema_alpha=0.9, mc_lambda=0.995):
+    def __init__(self, metric, max_iou_distance=0.1, max_age=500, n_init=3, _lambda=0, ema_alpha=0.9, mc_lambda=0.995):
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age

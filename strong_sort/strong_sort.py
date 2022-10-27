@@ -19,13 +19,22 @@ __all__ = ['StrongSORT']
 
 
 class StrongSORT(object):
+    '''
+    
+    Todo for Unattended Bags MVP
+    - Increase max-age to very high number e.g. 500 (original: 500)
+    - Decrease max dist (what is this?) original: 0.2
+    - Decrease max iou distance to small number such that we only want stationary objects e.g. 0.1 (original: 0.9)
+    - Decrease feature similarity requirement? (later)
+
+    '''
     def __init__(self, 
                  model_weights,
                  device,
                  fp16,
-                 max_dist=0.2,
-                 max_iou_distance=0.7,
-                 max_age=70, n_init=3,
+                 max_dist=0.1,
+                 max_iou_distance=0.3,
+                 max_age=500, n_init=3,
                  nn_budget=100,
                  mc_lambda=0.995,
                  ema_alpha=0.9
