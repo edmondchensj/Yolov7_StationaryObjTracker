@@ -22,24 +22,46 @@ class StrongSORT(object):
     '''
     
     Todo for Unattended Bags MVP
-    - Increase max-age to very high number e.g. 500 (original: 500)
+
+    0. Change fps to <2fps
+    - Test videos: Speed up by 10x
+    - Actual inference: 
+
+    1. Improve tracking (DONE)
+    - Increase max-age to very high number (original: 70) to help occlusion (2 fps -> 2 x 60 x 5 = 600)
+    - Decrease OSNet conf threshold (cant find in repo)
+
+    2. Restrict tracker to stationary objects only (NO NEED)
     - Decrease max dist (what is this?) original: 0.2
     - Decrease max iou distance to small number such that we only want stationary objects e.g. 0.1 (original: 0.9)
-    - Decrease feature similarity requirement? (later)
+    - This might not be needed 
+    --> tracker generally assigns same index to bag in stationary position, and those that move around will disappear eventually. 
+    --> people are generally stationary inside train, so we dont have to differentiate. 
 
+    3. Improve detection (reduce false negative) (YOLO) (OK)
+    - Decrease confidence threshold from 0.25 to 0.05
+
+    4. Set unattended threshold 
+
+    5. Set logic to render unattended status when num occurrence exceed X within Y min of first timestamp
+
+    6. Refactor params to config file
     '''
     def __init__(self, 
                  model_weights,
                  device,
                  fp16,
-                 max_dist=0.1,
-                 max_iou_distance=0.3,
-                 max_age=500, n_init=3,
+                 max_dist=0.1, 
+                 max_iou_distance=0.9, 
+                 max_age=360, # 3fps x 2min x 60s/min = 360
+                 n_init=3,
                  nn_budget=100,
                  mc_lambda=0.995,
-                 ema_alpha=0.9
+                 ema_alpha=0.9,
+                 unattended_bag_min_hits=100 # MIN HITS TO FLAG BAG UNATTENDED: 3fps x 2min x 60s/min = 360
                 ):
-        
+        self.UNATTENDED_BAG_MIN_HITS = unattended_bag_min_hits 
+
         self.model = ReIDDetectMultiBackend(weights=model_weights, device=device, fp16=fp16)
         
         self.max_dist = max_dist
@@ -76,9 +98,21 @@ class StrongSORT(object):
             track_id = track.track_id
             class_id = track.class_id
             conf = track.conf
-            outputs.append(np.array([x1, y1, x2, y2, track_id, class_id, conf]))
+
+            # STRATEGY 4: Use track length to determine unattended bag // max-age variable to manage occlusions. 
+            if track.hits > self.UNATTENDED_BAG_MIN_HITS:
+                unattended_flag = True
+            else:
+                unattended_flag = False
+
+            # Output data
+            data = np.array([x1, y1, x2, y2, track_id, class_id, conf, unattended_flag, track.hits])
+            outputs.append(data)
+
+
         if len(outputs) > 0:
             outputs = np.stack(outputs, axis=0)
+
         return outputs
 
     """

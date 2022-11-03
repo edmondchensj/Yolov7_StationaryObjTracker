@@ -119,6 +119,7 @@ def run(
     # initialize StrongSORT
     cfg = get_config()
     cfg.merge_from_file(opt.config_strongsort)
+    print(f"\nStrongSORT Configs: {cfg}")
 
     # Create as many strong sort instances as there are video sources
     strongsort_list = []
@@ -135,7 +136,7 @@ def run(
                 nn_budget=cfg.STRONGSORT.NN_BUDGET,
                 mc_lambda=cfg.STRONGSORT.MC_LAMBDA,
                 ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
-
+                unattended_bag_min_hits=cfg.STRONGSORT.UNATTENDED_BAG_MIN_HITS
             )
         )
         strongsort_list[i].model.warmup()
@@ -238,13 +239,21 @@ def run(
                         if save_vid or save_crop or show_vid:  # Add bbox to image
                             c = int(cls)  # integer class
                             id = int(id)  # integer id
-                            label = None if hide_labels else (f'{id} {names[c]}' if hide_conf else \
-                                (f'{id} {conf:.2f}' if hide_class else f'{id} {names[c]} {conf:.2f}'))
-                            plot_one_box(bboxes, im0, label=label, color=colors[int(cls)], line_thickness=2)
+                            unattended_flag = output[7]
+
+                            if unattended_flag and c in [24, 26, 28]: # backpack, suitcase, handbag
+                                label = f"UNATTENDED BAG {id} {conf:.2f}"
+                                color = [60,20,220]
+                            else:
+                                label = None if hide_labels else (f'{id} {names[c]}' if hide_conf else \
+                                    (f'{id} {conf:.2f}' if hide_class else f'{id} {names[c]} {conf:.2f}'))
+                                color = colors[int(cls)]
+                            
+                            plot_one_box(bboxes, im0, label=label, color=color, line_thickness=2)
                             if save_crop:
                                 txt_file_name = txt_file_name if (isinstance(path, list) and len(path) > 1) else ''
                                 save_one_box(bboxes, imc, file=save_dir / 'crops' / txt_file_name / names[c] / f'{id}' / f'{p.stem}.jpg', BGR=True)
-
+                            
                 print(f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)')
 
             else:
