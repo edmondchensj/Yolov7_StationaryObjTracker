@@ -67,7 +67,7 @@ class Track:
     """
 
     def __init__(self, detection, track_id, class_id, conf, n_init, max_age, ema_alpha,
-                 feature=None):
+                 feature=None, timestamp=None):
         self.track_id = track_id
         self.class_id = int(class_id)
         self.hits = 1
@@ -87,6 +87,8 @@ class Track:
 
         self.kf = KalmanFilter()
         self.mean, self.covariance = self.kf.initiate(detection)
+        self.ts_initial = timestamp
+        self.ts_latest = timestamp
 
     def to_tlwh(self):
         """Get current position in bounding box format `(top left x, top left y,
@@ -282,6 +284,9 @@ class Track:
         self.time_since_update = 0
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             self.state = TrackState.Confirmed
+
+        self.ts_latest = detection.timestamp
+        self.total_duration = self.ts_latest - self.ts_initial # add handling for None
 
     def mark_missed(self):
         """Mark this track as missed (no association at the current time step).

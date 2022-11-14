@@ -35,7 +35,7 @@ from yolov7.utils.general import (check_img_size, non_max_suppression, scale_coo
 from yolov7.utils.torch_utils import select_device, time_synchronized
 from yolov7.utils.plots import plot_one_box
 from strong_sort.utils.parser import get_config
-from strong_sort.strong_sort import StrongSORT
+from strong_sort.strong_sort_gui import StrongSORT
 
 
 VID_FORMATS = 'asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'ts', 'wmv'  # include video suffixes
@@ -88,18 +88,7 @@ class Algo:
         
     @torch.no_grad()
     def run(self, im, im0):
-        ''' Run tracking 
-        
-        Given an image frame, run algorithm to detect unattended bags.
-        
-        Arguments:
-            frame: 
-
-        Returns:   
-            detections: LIST of DICTS
-                [ {"bag_id": INT,
-                    "bbox": LIST,
-                    "conf": FLOAT} ]
+        ''' Main tracking algorithm
         '''
         s = ''
         t1 = time_synchronized()
@@ -134,14 +123,14 @@ class Algo:
 
             # pass detections to strongsort
             t4 = time_synchronized()
-            detections = self.strongsort.update(xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
+            detections = self.strongsort.update(xywhs.cpu(), confs.cpu(), clss.cpu(), im0, t3)
             t5 = time_synchronized()
 
             print(f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)')
-            return detections, confs
+            return detections
 
         else:
             self.strongsort.increment_ages()
             print('No detections')
             detections = []
-        return detections, []
+        return detections

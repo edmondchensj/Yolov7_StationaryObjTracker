@@ -7,9 +7,8 @@ STRONGSORT:
   MAX_AGE: 500           # Maximum number of missed misses before a track is deleted
   N_INIT: 3              # Number of frames that a track remains in initialization phase
   NN_BUDGET: 100         # Maximum size of the appearance descriptors gallery
-  UNATTENDED_BAG_MIN_HITS: 80 # Minimum number of hits (frames) for an object to be flagged as unattended
+  UNATTENDED_BAG_MIN_HITS: 3 # Minimum number of hits (frames) for an object to be flagged as unattended
   
 # From observation:
 # - similarity metric too insensitive, causing different objects to be tagged to same index. 
     # - change max_dist from 0.2 to 0.1
-    

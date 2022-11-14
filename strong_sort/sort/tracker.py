@@ -81,11 +81,15 @@ class Tracker:
         # Update track set.
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
-                detections[detection_idx], classes[detection_idx], confidences[detection_idx])
+                                        detections[detection_idx], 
+                                        classes[detection_idx], 
+                                        confidences[detection_idx])
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
         for detection_idx in unmatched_detections:
-            self._initiate_track(detections[detection_idx], classes[detection_idx].item(), confidences[detection_idx].item())
+            self._initiate_track(detections[detection_idx], 
+                                classes[detection_idx].item(), 
+                                confidences[detection_idx].item())
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
         # Update distance metric.
@@ -172,6 +176,13 @@ class Tracker:
 
     def _initiate_track(self, detection, class_id, conf):
         self.tracks.append(Track(
-            detection.to_xyah(), self._next_id, class_id, conf, self.n_init, self.max_age, self.ema_alpha,
-            detection.feature))
+            detection.to_xyah(), 
+            self._next_id, 
+            class_id, 
+            conf, 
+            self.n_init, 
+            self.max_age, 
+            self.ema_alpha,
+            detection.feature,
+            detection.timestamp))
         self._next_id += 1
