@@ -42,12 +42,15 @@ VID_FORMATS = 'asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 't
 CLASSES = [24, 26, 28]
 
 class Algo:
-    ''' Class for unattended bag detection algorithm '''
+    ''' Class for unattended bag detection algorithm 
+    
+    '''
     def __init__(self, **kwargs):
         ''' Initialise global variables and load weights '''
         self.yolo_weights = kwargs.get("yolo_weights", "yolov7.pt") # WEIGHTS / 
         self.yolo_conf = kwargs.get("yolo_conf", 0.05)
-        self.strong_sort_weights = kwargs.get("strong_sort_weights", "")
+        self.strong_sort_weights = kwargs.get("reid_weights", "")
+        self.unattended_threshold_seconds = kwargs.get("unattended_threshold_seconds")
         self.config_strongsort = 'strong_sort/configs/strong_sort.yaml'
         self.iou_thres = 0.3 # NMS IOU threshold
         self.agnostic_nms=False,  # class-agnostic NMS
@@ -82,13 +85,18 @@ class Algo:
                     nn_budget=cfg.STRONGSORT.NN_BUDGET,
                     mc_lambda=cfg.STRONGSORT.MC_LAMBDA,
                     ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
-                    unattended_bag_min_hits=cfg.STRONGSORT.UNATTENDED_BAG_MIN_HITS
+                    unattended_bag_min_hits=cfg.STRONGSORT.UNATTENDED_BAG_MIN_HITS,
+                    unattended_threshold_seconds=self.unattended_threshold_seconds
                 )
         self.strongsort.model.warmup()
         
     @torch.no_grad()
     def run(self, im, im0):
         ''' Main tracking algorithm
+
+        Args:
+            im: image tensor that has been resized/padded/transposed to RGB
+            im0: original image read by cv2.imread()
         '''
         s = ''
         t1 = time_synchronized()
